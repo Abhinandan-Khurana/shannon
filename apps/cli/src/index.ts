@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Shannon CLI — AI Penetration Testing Framework
  *

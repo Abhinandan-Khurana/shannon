@@ -1,3 +1,49 @@
 #!/usr/bin/env node
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
+
 process.env.SHANNON_LOCAL = '1';
-import('./apps/cli/dist/index.mjs');
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const cliEntries = [
+  path.join(__dirname, 'apps/cli/dist/index.js'),
+  path.join(__dirname, 'apps/cli/dist/index.mjs'),
+];
+
+function getCliEntry() {
+  return cliEntries.find((entry) => fs.existsSync(entry));
+}
+
+function ensureCliBuilt() {
+  if (getCliEntry()) return;
+
+  const packageManager = process.env.npm_execpath?.includes('pnpm') ? 'pnpm' : 'pnpm';
+  const result = spawnSync(
+    packageManager,
+    ['--dir', __dirname, '--filter', '@keygraph/shannon', 'build'],
+    { stdio: 'inherit' },
+  );
+
+  if (result.error) {
+    console.error(`Failed to build Shannon CLI: ${result.error.message}`);
+    process.exit(result.status ?? 1);
+  }
+
+  if (result.status !== 0 || !getCliEntry()) {
+    console.error('Shannon CLI build did not produce a runnable dist entrypoint');
+    console.error('Run `pnpm build` and try again.');
+    process.exit(result.status ?? 1);
+  }
+}
+
+ensureCliBuilt();
+const cliEntry = getCliEntry();
+
+if (!cliEntry) {
+  console.error('Shannon CLI is still missing after bootstrap.');
+  process.exit(1);
+}
+
+await import(pathToFileURL(cliEntry).href);

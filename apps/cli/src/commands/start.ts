@@ -7,7 +7,6 @@
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { ensureImage, ensureInfra, randomSuffix, spawnWorker } from '../docker.js';
 import { buildEnvFlags, isRouterConfigured, loadEnv, validateCredentials } from '../env.js';
@@ -79,12 +78,11 @@ export async function start(args: StartArgs): Promise<void> {
     fs.chmodSync(dirPath, 0o777);
   }
 
-  // 10. Pre-create overlay mount points (Linux :ro mounts can't auto-create them)
-  if (os.platform() === 'linux') {
-    const shannonDir = path.join(repo.hostPath, '.shannon');
-    for (const dir of ['deliverables', 'scratchpad', '.playwright-cli']) {
-      fs.mkdirSync(path.join(shannonDir, dir), { recursive: true });
-    }
+  // 10. Pre-create overlay mount points before bind-mounting over the read-only repo.
+  // Docker Desktop on macOS needs these directories to exist just like Linux does.
+  const shannonDir = path.join(repo.hostPath, '.shannon');
+  for (const dir of ['deliverables', 'scratchpad', '.playwright-cli']) {
+    fs.mkdirSync(path.join(shannonDir, dir), { recursive: true });
   }
 
   const credentialsPath = getCredentialsPath();

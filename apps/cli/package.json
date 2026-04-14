@@ -3,16 +3,16 @@
   "version": "0.0.0",
   "description": "Shannon - Autonomous white-box AI pentester for web applications and APIs by Keygraph",
   "type": "module",
-  "main": "dist/index.mjs",
+  "main": "dist/index.js",
   "bin": {
-    "shannon": "dist/index.mjs"
+    "shannon": "dist/index.js"
   },
   "files": [
     "dist",
     "infra"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "tsc -p tsconfig.json",
     "check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
@@ -43,8 +43,5 @@
   },
   "engines": {
     "node": ">=18"
-  },
-  "devDependencies": {
-    "tsdown": "^0.21.5"
   }
 }
